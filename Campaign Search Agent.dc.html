@@ -908,7 +908,7 @@ class Component extends DCLogic {
             ' — teklif ',
             R('strong', {}, '3 gün geçerli'),
             '. Başvuru: ',
-            R('span', { style: { color: '#2E5EAA', textDecoration: 'underline' } }, 'mcc.etiya.com')
+            R('span', { style: { color: '#2E5EAA', textDecoration: 'underline' } }, 'mcc.cm.com')
           ),
           R('div', { style: { display: 'flex', gap: 10, marginTop: 8 } },
             ...[['Karakter', '148 / 160'], ['Teslim', 'Tek mesaj'], ['Uyumluluk', 'GSM-7 ✓']].map(([k, v]) =>
@@ -1175,7 +1175,7 @@ class Component extends DCLogic {
         approved,
         hasSMS ? R('div', { style: { background: '#EEF3FA', border: '1px solid #D8E4F0', borderRadius: 7, padding: '9px 11px', marginBottom: 7, fontSize: 11, color: '#2B3445', lineHeight: 1.7, fontStyle: 'italic' } },
           R('div', { style: { fontSize: 9, fontWeight: 700, color: '#2E5EAA', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 4, fontStyle: 'normal' } }, '📱 SMS'),
-          '"Değerli müşterimiz, size özel 3 aylık %30 indirimli paketimizden yararlanın! 139 TL/ay — teklif 3 gün geçerli. mcc.etiya.com"'
+          '"Değerli müşterimiz, size özel 3 aylık %30 indirimli paketimizden yararlanın! 139 TL/ay — teklif 3 gün geçerli. mcc.cm.com"'
         ) : null,
         hasEmail ? R('div', { style: { background: '#F5F0FF', border: '1px solid #DDD8FF', borderRadius: 7, padding: '9px 11px', fontSize: 11, color: '#2B3445', lineHeight: 1.7 } },
           R('div', { style: { fontSize: 9, fontWeight: 700, color: '#7E4FCF', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 4 } }, '✉ Email'),
