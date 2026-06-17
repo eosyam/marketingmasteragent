@@ -81,8 +81,8 @@
       <div style="font-size:10px;color:#A6AEBD;font-weight:700;text-transform:uppercase;letter-spacing:.1em;padding:10px 18px 5px">USES</div>
       <div style="padding:8px 18px;font-size:13px;color:#505B79;display:flex;align-items:center;gap:9px;cursor:pointer"><i data-lucide="layers" style="width:15px;height:15px;flex-shrink:0"></i>Program</div>
       <div style="padding:8px 15px;font-size:13px;color:#62AB47;font-weight:600;display:flex;align-items:center;gap:9px;background:#EEF3FA;border-left:3px solid #62AB47;cursor:pointer"><i data-lucide="megaphone" style="width:15px;height:15px;flex-shrink:0"></i>Campaign</div>
-      <div style="padding:8px 18px;font-size:13px;color:#A6AEBD;display:flex;align-items:center;gap:9px;cursor:not-allowed"><i data-lucide="target" style="width:15px;height:15px;flex-shrink:0"></i>Competitor Intelligence</div>
-      <div style="padding:8px 18px;font-size:13px;color:#A6AEBD;display:flex;align-items:center;gap:9px;cursor:not-allowed"><i data-lucide="activity" style="width:15px;height:15px;flex-shrink:0"></i>Campaign Simulation</div>
+      <div style="padding:8px 18px;font-size:13px;color:#505B79;display:flex;align-items:center;gap:9px;cursor:pointer"><i data-lucide="target" style="width:15px;height:15px;flex-shrink:0"></i>Competitor Intelligence</div>
+      <div style="padding:8px 18px;font-size:13px;color:#505B79;display:flex;align-items:center;gap:9px;cursor:pointer"><i data-lucide="activity" style="width:15px;height:15px;flex-shrink:0"></i>Campaign Simulation</div>
       <div style="padding:8px 18px;font-size:13px;color:#505B79;display:flex;align-items:center;gap:9px;cursor:pointer"><i data-lucide="file-text" style="width:15px;height:15px;flex-shrink:0"></i>Content</div>
       <div style="padding:8px 18px;font-size:13px;color:#505B79;display:flex;align-items:center;gap:9px;cursor:pointer"><i data-lucide="users" style="width:15px;height:15px;flex-shrink:0"></i>Segmentation</div>
       <div style="padding:8px 18px;font-size:13px;color:#505B79;display:flex;align-items:center;gap:9px;cursor:pointer"><i data-lucide="database" style="width:15px;height:15px;flex-shrink:0"></i>Datamart</div>
@@ -333,305 +333,72 @@ class Component extends DCLogic {
     };
 
     /* ── Step 0: Churn Alert ── */
-    if (agentStep === 0) {
-      /* Mini sparkline — score trend last 7 weeks */
-      const scorePoints = [0.44, 0.48, 0.51, 0.57, 0.62, 0.65, 0.78];
-      const SW = 240, SH = 44, pad = 6;
-      const maxS = 0.9, minS = 0.3;
-      const sx = (i) => pad + (i / (scorePoints.length - 1)) * (SW - pad * 2);
-      const sy = (v) => SH - pad - ((v - minS) / (maxS - minS)) * (SH - pad * 2);
-      const pathD = scorePoints.map((v, i) => (i === 0 ? 'M' : 'L') + sx(i).toFixed(1) + ',' + sy(v).toFixed(1)).join(' ');
-      const areaD = pathD + ' L' + sx(scorePoints.length - 1).toFixed(1) + ',' + SH + ' L' + pad.toFixed(1) + ',' + SH + ' Z';
-      const lastX = sx(scorePoints.length - 1);
-      const lastY = sy(scorePoints[scorePoints.length - 1]);
-
-      const sparkline = R('svg', { viewBox: '0 0 ' + SW + ' ' + SH, style: { width: '100%', height: SH, display: 'block', overflow: 'visible' } },
-        /* threshold line at 0.75 */
-        R('line', { x1: pad, y1: sy(0.75), x2: SW - pad, y2: sy(0.75), stroke: '#E5484D', strokeWidth: 1, strokeDasharray: '3 3', opacity: .5 }),
-        R('text', { x: SW - pad - 2, y: sy(0.75) - 4, textAnchor: 'end', fontSize: 8, fill: '#E5484D', opacity: .7, fontFamily: "'Open Sans',sans-serif" }, 'ALERT THRESHOLD 0.75'),
-        R('path', { d: areaD, fill: 'rgba(229,72,77,.08)', stroke: 'none' }),
-        R('path', { d: pathD, fill: 'none', stroke: '#E5484D', strokeWidth: 2 }),
-        /* dots */
-        ...scorePoints.map((v, i) => R('circle', { key: i, cx: sx(i), cy: sy(v), r: i === scorePoints.length - 1 ? 5 : 2.5, fill: i === scorePoints.length - 1 ? '#E5484D' : '#fff', stroke: '#E5484D', strokeWidth: i === scorePoints.length - 1 ? 2 : 1.5 })),
-        /* week labels */
-        ...scorePoints.map((v, i) => R('text', { key: 'w' + i, x: sx(i), y: SH, textAnchor: 'middle', fontSize: 8, fill: '#A6AEBD', fontFamily: "'Open Sans',sans-serif" }, 'W' + (i + 1)))
-      );
-
-      /* Behavioral signal rows */
-      const signals = [
-        { label: 'App Opens / Week', val: '↓ 8.2 → 2.1', color: '#E5484D', icon: '<rect x="5" y="2" width="14" height="20" rx="2"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="11" y2="15"/>' },
-        { label: 'Data Usage Decline', val: '−38% / 30 days', color: '#E5484D', icon: '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>' },
-        { label: 'Support Calls', val: '↑ 3× in 2 weeks', color: '#F7941D', icon: '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6.12 6.12l1.88-1.88a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>' },
-        { label: 'Competitor Site Visits', val: 'Detected ⚠', color: '#E5484D', icon: '<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>' },
-        { label: 'Avg. ARPU Trend', val: '↓ 189 → 141 TL', color: '#F7941D', icon: '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>' },
-        { label: 'Last Interaction', val: '19 days ago', color: '#A6AEBD', icon: '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>' }
-      ];
-
-      return wrap(
-        /* Alert banner */
-        R('div', { style: { background: 'linear-gradient(135deg,#FFF0F0,#FDE8E8)', border: '1px solid #FCA5A5', borderRadius: 9, padding: '12px 14px' } },
-          R('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 } },
-            R('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
-              R('div', { style: { width: 10, height: 10, borderRadius: '50%', background: '#E5484D', boxShadow: '0 0 0 4px rgba(229,72,77,.2)', flexShrink: 0 } }),
-              R('div', {},
-                R('div', { style: { fontSize: 13, fontWeight: 700, color: '#C0392B' } }, 'Churn Risk Detected'),
-                R('div', { style: { fontSize: 10, color: '#E5484D', marginTop: 1 } }, 'Digital Twin Community Agent · Jun 12, 2026 · 08:47')
+    if (agentStep === 0) return wrap(
+      R('div', { style: { background: 'linear-gradient(135deg,#FFF0F0,#FDE8E8)', border: '1px solid #FCA5A5', borderRadius: 9, padding: '12px 14px' } },
+        R('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 } },
+          R('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
+            R('div', { style: { width: 10, height: 10, borderRadius: '50%', background: '#E5484D', boxShadow: '0 0 0 4px rgba(229,72,77,.2)', flexShrink: 0 } }),
+            R('div', {},
+              R('div', { style: { fontSize: 13, fontWeight: 700, color: '#C0392B' } }, 'Churn Risk Detected'),
+              R('div', { style: { fontSize: 10, color: '#E5484D', marginTop: 1, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' } },
+                R('span', {}, 'Digital Twin Community Agent · Jun 12, 2026 · 08:47'),
+                R('span', { style: { fontSize: 8, background: 'rgba(229,72,77,.1)', color: 'rgba(229,72,77,.6)', padding: '1px 5px', borderRadius: 3, fontWeight: 600, flexShrink: 0 } }, 'ayrıca Teams\'e iletildi')
               )
-            ),
-            R('div', { style: { background: '#E5484D', color: '#fff', fontSize: 9, fontWeight: 700, padding: '3px 8px', borderRadius: 3, letterSpacing: '.05em', flexShrink: 0 } }, 'HIGH PRIORITY')
-          ),
-          R('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 } },
-            ...[
-              ['Community', 'Budget Conscious', '#2B3445'],
-              ['Community Size', '1,000 customers', '#2B3445'],
-              ['At-Risk Customers', '300–450 est.', '#E5484D'],
-              ['Historical Churn Rate', '34% / 60 days', '#E5484D']
-            ].map(([k, v, c], i) => R('div', { key: i, style: { background: 'rgba(255,255,255,.6)', borderRadius: 5, padding: '6px 9px' } },
-              R('div', { style: { fontSize: 9, fontWeight: 700, color: '#A6AEBD', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 2 } }, k),
-              R('div', { style: { fontSize: 12, fontWeight: 700, color: c } }, v)
-            ))
-          )
-        ),
-
-        /* Churn Score Trend */
-        R('div', { style: { background: '#fff', border: '1px solid #E3E8EF', borderRadius: 8, padding: '10px 12px' } },
-          R('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 } },
-            R('div', { style: { fontSize: 11, fontWeight: 700, color: '#505B79' } }, 'Churn Score Trend — Last 7 Weeks'),
-            R('div', { style: { display: 'flex', alignItems: 'center', gap: 5 } },
-              R('div', { style: { fontSize: 11, color: '#A6AEBD' } }, '0.65'),
-              this._svg('<polyline points="9 18 15 12 9 6"/>', 11, '#E5484D'),
-              R('div', { style: { fontSize: 15, fontWeight: 700, color: '#E5484D' } }, '0.78')
             )
           ),
-          sparkline
+          R('div', { style: { background: '#E5484D', color: '#fff', fontSize: 9, fontWeight: 700, padding: '3px 8px', borderRadius: 3, letterSpacing: '.05em', flexShrink: 0 } }, 'HIGH PRIORITY')
         ),
-
-        /* Pattern match */
-        R('div', { style: { background: '#F2F9EC', border: '1px solid #C8E6B8', borderRadius: 7, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8 } },
-          R('div', { style: { width: 22, height: 22, borderRadius: '50%', background: '#62AB47', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 } },
-            this._svg('<path d="M20 6L9 17l-5-5"/>', 11, '#fff')
-          ),
-          R('div', {},
-            R('div', { style: { fontSize: 11, fontWeight: 700, color: '#3E9232' } }, 'Historical Pattern Match — Confirmed'),
-            R('div', { style: { fontSize: 10, color: '#62AB47' } }, 'Matches Jul 2024 wave · 91% similarity · Led to 34% churn')
-          )
-        ),
-
-        /* Behavioral Signals */
-        R('div', { style: { background: '#F8FAFC', border: '1px solid #E3E8EF', borderRadius: 8, overflow: 'hidden' } },
-          R('div', { style: { background: '#F0F5FB', padding: '6px 12px', fontSize: 10, fontWeight: 700, color: '#7E8A9A', textTransform: 'uppercase', letterSpacing: '.07em', borderBottom: '1px solid #EEF2F7' } }, 'Behavioral Signals'),
-          ...signals.map((s, i) => R('div', { key: i, style: { display: 'flex', alignItems: 'center', gap: 9, padding: '7px 12px', borderBottom: i < signals.length - 1 ? '1px solid #EEF2F7' : 'none', background: '#fff' } },
-            R('div', { style: { width: 22, height: 22, borderRadius: 5, background: s.color === '#E5484D' ? '#FFF0F0' : s.color === '#F7941D' ? '#FFF3E0' : '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 } },
-              this._svg(s.icon, 11, s.color)
-            ),
-            R('div', { style: { flex: 1, fontSize: 11, color: '#505B79' } }, s.label),
-            R('div', { style: { fontSize: 11, fontWeight: 700, color: s.color, whiteSpace: 'nowrap' } }, s.val)
-          ))
-        ),
-
-        /* Estimated Impact */
-        R('div', { style: { background: '#fff', border: '1px solid #E3E8EF', borderRadius: 8, overflow: 'hidden' } },
-          R('div', { style: { background: 'linear-gradient(135deg,#2A3252,#3A4870)', padding: '7px 12px', display: 'flex', alignItems: 'center', gap: 6 } },
-            this._svg('<path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/>', 12, '#F7941D'),
-            R('span', { style: { fontSize: 10, fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: '.08em' } }, 'Estimated Campaign Impact'),
-            R('span', { style: { marginLeft: 'auto', fontSize: 9, color: 'rgba(255,255,255,.4)', fontStyle: 'italic' } }, 'if no action taken')
-          ),
-          /* No-action vs action comparison */
-          R('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0 } },
-            /* No action */
-            R('div', { style: { padding: '10px 12px', borderRight: '1px solid #EEF2F7' } },
-              R('div', { style: { display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8 } },
-                R('div', { style: { width: 6, height: 6, borderRadius: '50%', background: '#E5484D' } }),
-                R('div', { style: { fontSize: 10, fontWeight: 700, color: '#E5484D', textTransform: 'uppercase', letterSpacing: '.07em' } }, 'No Action')
-              ),
-              ...[
-                ['Projected Churned', '~340', '#E5484D'],
-                ['Revenue Lost / mo', '~48,060 TL', '#E5484D'],
-                ['Revenue Lost / yr', '~576,720 TL', '#C0392B'],
-                ['Acq. Cost to Replace', '~170,000 TL', '#C0392B']
-              ].map(([k, v, c], i) => R('div', { key: i, style: { marginBottom: 6 } },
-                R('div', { style: { fontSize: 9, color: '#A6AEBD', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 1 } }, k),
-                R('div', { style: { fontSize: 13, fontWeight: 700, color: c } }, v)
-              ))
-            ),
-            /* With campaign */
-            R('div', { style: { padding: '10px 12px', background: '#FAFFF7' } },
-              R('div', { style: { display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8 } },
-                R('div', { style: { width: 6, height: 6, borderRadius: '50%', background: '#62AB47' } }),
-                R('div', { style: { fontSize: 10, fontWeight: 700, color: '#3E9232', textTransform: 'uppercase', letterSpacing: '.07em' } }, 'With Campaign')
-              ),
-              ...[
-                ['Est. Retained', '~102–153', '#3E9232'],
-                ['Revenue Saved / mo', '~14,400–21,600 TL', '#3E9232'],
-                ['Campaign Cost (est.)', '~4,500 TL', '#505B79'],
-                ['Est. ROI', '3.2× – 4.8×', '#62AB47']
-              ].map(([k, v, c], i) => R('div', { key: i, style: { marginBottom: 6 } },
-                R('div', { style: { fontSize: 9, color: '#A6AEBD', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 1 } }, k),
-                R('div', { style: { fontSize: 13, fontWeight: 700, color: c } }, v)
-              ))
-            )
-          ),
-          /* Urgency countdown */
-          R('div', { style: { padding: '8px 12px', borderTop: '1px solid #EEF2F7', background: '#FFF8F0', display: 'flex', alignItems: 'center', gap: 7 } },
-            this._svg('<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>', 12, '#C55A00'),
-            R('div', { style: { fontSize: 11, color: '#C55A00' } },
-              R('strong', {}, 'Action window: '), '7–10 days before competitor migration accelerates. Estimated 12% additional churn per week of delay.'
-            )
-          )
-        ),
-
-        /* Churn breakdown bar */
-        R('div', { style: { background: '#F8FAFC', border: '1px solid #E3E8EF', borderRadius: 8, padding: '10px 12px' } },
-          R('div', { style: { fontSize: 11, fontWeight: 700, color: '#505B79', marginBottom: 10 } }, 'Churn Risk Distribution — 1,000 Customers'),
+        R('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 } },
           ...[
-            { label: 'High Risk (Score >0.75)', count: 300, total: 1000, color: '#E5484D' },
-            { label: 'Medium Risk (0.50–0.75)', count: 280, total: 1000, color: '#F7941D' },
-            { label: 'Low Risk (<0.50)', count: 420, total: 1000, color: '#62AB47' }
-          ].map((b, i) => R('div', { key: i, style: { marginBottom: i < 2 ? 8 : 0 } },
-            R('div', { style: { display: 'flex', justifyContent: 'space-between', marginBottom: 4 } },
-              R('span', { style: { fontSize: 10, color: '#7E8A9A' } }, b.label),
-              R('span', { style: { fontSize: 10, fontWeight: 700, color: b.color } }, b.count + ' (' + (b.count / b.total * 100).toFixed(0) + '%)')
-            ),
-            R('div', { style: { height: 7, background: '#EEF2F7', borderRadius: 99, overflow: 'hidden' } },
-              R('div', { style: { height: '100%', width: (b.count / b.total * 100) + '%', background: b.color, borderRadius: 99 } })
-            )
+            ['Community', 'Budget Conscious', '#2B3445'],
+            ['Community Size', '1,000 customers', '#2B3445'],
+            ['At-Risk Customers', '300–450 est.', '#E5484D'],
+            ['Historical Churn Rate', '34% / 60 days', '#E5484D']
+          ].map(([k, v, c], i) => R('div', { key: i, style: { background: 'rgba(255,255,255,.6)', borderRadius: 5, padding: '6px 9px' } },
+            R('div', { style: { fontSize: 9, fontWeight: 700, color: '#A6AEBD', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 2 } }, k),
+            R('div', { style: { fontSize: 12, fontWeight: 700, color: c } }, v)
           ))
-        ),
-
-        /* Source agents */
-        R('div', { style: { fontSize: 10, color: '#A6AEBD', lineHeight: 1.7 } },
-          R('span', { style: { fontWeight: 700, color: '#7E8A9A' } }, 'Sources: '),
-          'Digital Twin Agent · CDP Behavioral Engine · Competitor Monitoring · CRM Support Logs'
-        ),
-
-        R('div', { style: { display: 'flex' } },
-          R('button', { onClick: () => this.startAgent(), style: { flex: 1, padding: '11px 0', border: 'none', borderRadius: 6, background: '#E5484D', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Open Sans',sans-serif", display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, boxShadow: '0 3px 10px rgba(229,72,77,.35)' } },
-            this._svg('<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>', 15, '#fff'),
-            'Build Micro-Segment →'
-          )
         )
-      );
-    }
+      ),
+      R('div', { style: { background: '#F2F9EC', border: '1px solid #C8E6B8', borderRadius: 7, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8 } },
+        R('div', { style: { width: 22, height: 22, borderRadius: '50%', background: '#62AB47', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 } },
+          this._svg('<path d="M20 6L9 17l-5-5"/>', 11, '#fff')
+        ),
+        R('div', {},
+          R('div', { style: { fontSize: 11, fontWeight: 700, color: '#3E9232' } }, 'Historical Pattern Match — 91% similarity'),
+          R('div', { style: { fontSize: 10, color: '#62AB47' } }, 'Matches Jul 2024 churn wave · Led to 34% churn in 60 days')
+        )
+      ),
+      R('div', { style: { display: 'flex' } },
+        R('button', { onClick: () => this.startAgent(), style: { flex: 1, padding: '11px 0', border: 'none', borderRadius: 6, background: '#E5484D', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Open Sans',sans-serif", display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, boxShadow: '0 3px 10px rgba(229,72,77,.35)' } },
+          this._svg('<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>', 15, '#fff'),
+          'Build Campaign →'
+        )
+      )
+    );
 
     /* ── Step 1: Segmentation ── */
-    if (agentStep === 1) {
-      const isRev = revisionRound > 0;
-
-      const filterDefs = [
-        {
-          key: 'Churn Score',
-          vals: ['> 0.75', '> 0.68', '> 0.60'],
-          colors: [null, '#F7941D', '#E5484D'],
-          icon: '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>',
-          comment: [
-            'Historical churn wave started at 0.75. Customers above this threshold have 91% similarity to the Jul 2024 pattern.',
-            'Loosened to 0.68 to widen reach — still above the 0.65 baseline where behavioral signals first appeared.',
-            'Further widened to 0.60 — broader net, lower precision. Confidence band will widen in simulation.'
-          ]
-        },
-        {
-          key: 'Tenure',
-          vals: ['24+ months', '18+ months', '12+ months'],
-          colors: [null, '#F7941D', '#E5484D'],
-          icon: '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
-          comment: [
-            'Long-tenure customers are price-sensitive but loyal by habit. 24+ month cohort shows highest retention response to discount offers (38% vs 21% for <12mo).',
-            'Reduced to 18+ months — adds ~90 customers who show similar behavioral signals but shorter tenure.',
-            'Reduced to 12+ months — adds newer customers; retention rate may be lower for this cohort.'
-          ]
-        },
-        {
-          key: 'Data Usage Decline',
-          vals: ['> 30% / 30d', '> 20% / 30d', '> 15% / 30d'],
-          colors: [null, '#F7941D', '#E5484D'],
-          icon: '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
-          comment: [
-            'A 30% data drop is the strongest leading churn indicator for Budget Conscious users — 3.2× more likely to churn than average. Matches competitor trial usage pattern.',
-            'Lowered to 20% — catches customers in earlier churn consideration phase. Earlier intervention increases save rate.',
-            'Lowered to 15% — broad signal, may include customers pausing for travel or temporary reasons.'
-          ]
-        },
-        {
-          key: 'ARPU',
-          vals: ['100 TL+', '70 TL+', '50 TL+'],
-          colors: [null, '#F7941D', '#E5484D'],
-          icon: '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
-          comment: [
-            'Min 100 TL ARPU ensures campaign ROI is positive. Offer B (−40 TL/mo) breaks even at ~90 TL ARPU over 3 months.',
-            'Lowered to 70 TL — still ROI-positive but with tighter margin. Widens segment by ~80 customers.',
-            'Lowered to 50 TL — borderline ROI territory. Monitor closely in simulation.'
-          ]
-        }
-      ];
-
-      const ri = Math.min(revisionRound, 2);
-
-      /* Agent intro bubble */
-      const introBubble = R('div', { style: { display: 'flex', gap: 9, alignItems: 'flex-start' } },
-        R('div', { style: { width: 26, height: 26, borderRadius: '50%', background: 'linear-gradient(135deg,#2A3252,#3A4870)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 } },
-          this._svg('<path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/>', 11, '#F7941D')
-        ),
-        R('div', { style: { background: '#EEF3FA', border: '1px solid #D8E4F0', borderRadius: '0 10px 10px 10px', padding: '9px 12px', fontSize: 12, color: '#2B3445', lineHeight: 1.65 } },
-          isRev
-            ? R('span', {}, 'Filters loosened for revision ' + revisionRound + '. I\'ve relaxed thresholds to widen the segment while keeping the core churn signal intact. Review the updated criteria below.')
-            : R('span', {}, 'I analyzed the Budget Conscious community against the Jul 2024 churn pattern. Here are the 4 filters I recommend — each one targets a specific risk signal. You can approve or ask me to revise.')
-        )
-      );
-
-      /* Filter rows with inline comments */
-      const filterRows = filterDefs.map((f, fi) => {
-        const val = f.vals[ri];
-        const color = f.colors[ri];
-        const comment = f.comment[ri];
-        const changed = ri > 0 && f.colors[ri] !== null;
-
-        return R('div', { key: fi, style: { border: '1px solid ' + (changed ? (ri === 1 ? '#FFD8A8' : '#FCA5A5') : '#E3E8EF'), borderRadius: 8, overflow: 'hidden', marginBottom: 8 } },
-          /* Filter row */
-          R('div', { style: { display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: changed ? (ri === 1 ? '#FFFBF5' : '#FFF5F5') : '#fff' } },
-            R('div', { style: { width: 24, height: 24, borderRadius: 6, background: changed ? (ri === 1 ? '#FFF3E0' : '#FFF0F0') : '#EEF3FA', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 } },
-              this._svg(f.icon, 11, changed ? (ri === 1 ? '#C55A00' : '#E5484D') : '#3E5280')
-            ),
-            R('div', { style: { flex: 1 } },
-              R('div', { style: { fontSize: 10, fontWeight: 700, color: '#A6AEBD', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 2 } }, f.key),
-              R('div', { style: { fontSize: 13, fontWeight: 700, color: color || '#2B3445', display: 'flex', alignItems: 'center', gap: 5 } },
-                val,
-                changed ? R('span', { style: { fontSize: 9, background: color, color: '#fff', padding: '1px 5px', borderRadius: 2, fontWeight: 700 } }, '↓ LOOSENED') : null
-              )
-            )
-          ),
-          /* Agent comment */
-          R('div', { style: { background: '#F8FAFC', borderTop: '1px solid ' + (changed ? (ri === 1 ? '#FFD8A8' : '#FCA5A5') : '#EEF2F7'), padding: '7px 12px', display: 'flex', gap: 6, alignItems: 'flex-start' } },
-            this._svg('<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>', 10, '#A6AEBD'),
-            R('div', { style: { fontSize: 11, color: '#7E8A9A', lineHeight: 1.6 } }, comment)
+    if (agentStep === 1) return wrap(
+      agLbl('Segmentation Agent', '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>', '#EEF3FA', '#3E5280'),
+      R('div', { style: { background: 'linear-gradient(135deg,#F2F9EC,#EDF5E5)', border: '1px solid #C8E6B8', borderRadius: 8, padding: '12px 14px' } },
+        R('div', { style: { fontSize: 28, fontWeight: 700, color: '#3E9232', lineHeight: 1, marginBottom: 3 } }, audienceSize.toLocaleString()),
+        R('div', { style: { fontSize: 11, color: '#62AB47', marginBottom: 10 } }, revisionRound > 0 ? 'customers matched · revision ' + revisionRound : 'customers matched'),
+        R('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 5 } },
+          ...['Churn >0.75', '24+ months', 'Data −30%', 'ARPU 100TL+'].map((tag, i) =>
+            R('div', { key: i, style: { fontSize: 10, fontWeight: 600, color: '#3E5280', background: '#EEF3FA', border: '1px solid #D8E4F0', borderRadius: 3, padding: '2px 8px' } }, tag)
           )
-        );
-      });
-
-      /* Audience result card */
-      const resultCard = R('div', { style: { background: 'linear-gradient(135deg,#F2F9EC,#EDF5E5)', border: '1px solid #C8E6B8', borderRadius: 8, padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
-        R('div', {},
-          R('div', { style: { fontSize: 9, fontWeight: 700, color: '#62AB47', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 3 } }, 'Matching Customers'),
-          R('div', { style: { fontSize: 32, fontWeight: 700, color: '#3E9232', lineHeight: 1 } }, audienceSize.toLocaleString()),
-          R('div', { style: { fontSize: 10, color: '#62AB47', marginTop: 3 } }, 'within 1,000 community limit')
-        ),
-        R('div', { style: { textAlign: 'right' } },
-          R('div', { style: { fontSize: 9, color: '#7E8A9A', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 3 } }, 'Coverage'),
-          R('div', { style: { fontSize: 16, fontWeight: 700, color: '#2B3445' } }, (audienceSize / 10).toFixed(0) + '%'),
-          R('div', { style: { fontSize: 10, color: '#A6AEBD' } }, 'of community')
         )
-      );
-
-      return wrap(
-        agLbl('Segmentation Agent', '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>', '#EEF3FA', '#3E5280'),
-        introBubble,
-        ...filterRows,
-        resultCard,
-        R('div', { style: { display: 'flex', gap: 8 } },
-          btn('Looks Good ✓', () => this.approveSegmentation(), 'primary'),
-          btn(revisionRound >= 2 ? 'Max revisions' : 'Revise Filters', () => this.reviseFilters(), 'ghost', revisionRound >= 2)
+      ),
+      R('div', { style: { display: 'flex', justifyContent: 'flex-end' } },
+        R('a', { href: '#', style: { display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#3E5280', fontWeight: 600, textDecoration: 'none', background: '#EEF3FA', border: '1px solid #D8E4F0', borderRadius: 4, padding: '3px 8px' } },
+          this._svg('<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>', 10, '#3E5280'), ' Segmentation\'da Görüntüle ↗'
         )
-      );
-    }
+      ),
+      R('div', { style: { display: 'flex', gap: 8 } },
+        btn('Looks Good ✓', () => this.approveSegmentation(), 'primary'),
+        btn(revisionRound >= 2 ? 'Max revisions' : 'Revise Filters', () => this.reviseFilters(), 'ghost', revisionRound >= 2)
+      )
+    );
 
     /* ── Step 2: Competitor ── */
     if (agentStep === 2) return wrap(
@@ -642,7 +409,11 @@ class Component extends DCLogic {
           'Competitor C — CRITICAL Threat'
         ),
         R('div', { style: { fontSize: 11, color: '#7E8A9A', lineHeight: 1.65 } },
-          '3 competitors scanned. Competitor C launched this week at 99 TL targeting Budget Conscious users directly. Full report is open.'
+          '3 competitors scanned. Competitor C launched this week at 99 TL targeting Budget Conscious users directly.'
+        ),
+        R('div', { style: { marginTop: 8, display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#3E5280', fontWeight: 600, cursor: 'pointer' } },
+          'Detaylar için Competitor Intelligence modülünü açın ',
+          this._svg('<line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/>', 10, '#3E5280')
         )
       ),
       R('div', { style: { display: 'flex', gap: 8 } },
@@ -728,7 +499,11 @@ class Component extends DCLogic {
         ),
         R('div', { style: { display: 'flex', gap: 6, flexWrap: 'wrap' } },
           btn('Approve ✓', () => this.approveSimulation(), 'primary'),
-          btn(revisionRound >= 2 ? 'Max reached' : 'Widen Audience', () => this.widenAudience(), 'ghost', revisionRound >= 2)
+          btn(revisionRound >= 2 ? 'Max reached' : 'Widen Audience', () => this.widenAudience(), 'ghost', revisionRound >= 2),
+          R('div', { style: { fontSize: 10, color: '#3E5280', display: 'flex', alignItems: 'center', gap: 3, cursor: 'pointer', fontWeight: 600, padding: '4px 0' } },
+            'Campaign Simulation\'da detaylı görüntüle ',
+            this._svg('<line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/>', 9, '#3E5280')
+          )
         )
       );
     }
@@ -809,109 +584,218 @@ class Component extends DCLogic {
 
   /* ─── AGENT WIDGET PANEL ───────────────────────────────── */
   buildAgentWidget() {
-    const R = (t, p, ...c) => React.createElement(t, p, ...c);
-    const { agentStep, chatCollapsed, audienceSize } = this.state;
+  const R = (t, p, ...c) => React.createElement(t, p, ...c);
+  const { agentStep, thinking, chatCollapsed, audienceSize, selectedOffer } = this.state;
 
-    if (chatCollapsed) return R('div', { style: { width: 44, flexShrink: 0, background: '#fff', borderLeft: '1px solid #EEF2F7', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '14px 0', gap: 10 } },
-      R('button', { onClick: () => this.setState({ chatCollapsed: false }), style: { width: 30, height: 30, borderRadius: 8, border: 0, background: 'linear-gradient(135deg,#2E3650,#3E4C72)', color: '#F7941D', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' } },
-        this._svg('<path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 15l.75 2.25L8 18l-2.25.75L5 21l-.75-2.25L2 18l2.25-.75z"/>', 14, '#F7941D')
+  if (chatCollapsed) return R('div', { style: { width: 44, flexShrink: 0, background: '#fff', borderLeft: '1px solid #EEF2F7', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '14px 0', gap: 10 } },
+    R('button', { onClick: () => this.setState({ chatCollapsed: false }), style: { width: 30, height: 30, borderRadius: 8, border: 0, background: 'linear-gradient(135deg,#2E3650,#3E4C72)', color: '#F7941D', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' } },
+      this._svg('<path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 15l.75 2.25L8 18l-2.25.75L5 21l-.75-2.25L2 18l2.25-.75z"/>', 14, '#F7941D')
+    ),
+    R('div', { style: { fontSize: 9, color: '#7E8A9A', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', writingMode: 'vertical-rl', transform: 'rotate(180deg)', marginTop: 8 } }, 'Master Agent')
+  );
+
+  // Header
+  const header = R('div', { style: { background: 'linear-gradient(160deg,#2A3252,#3A4870)', color: '#fff', flexShrink: 0 } },
+    R('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px 8px' } },
+      R('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
+        R('div', { style: { width: 8, height: 8, borderRadius: '50%', background: '#4ade80', boxShadow: '0 0 0 3px rgba(74,222,128,.25)', animation: 'pulse 2s infinite', flexShrink: 0 } }),
+        R('span', { style: { fontSize: 12, fontWeight: 700, letterSpacing: '.04em' } }, 'Marketing Master Agent'),
+        R('span', { style: { fontSize: 10, color: 'rgba(255,255,255,.45)', marginLeft: 4 } }, '· Running')
       ),
-      R('div', { style: { fontSize: 9, color: '#7E8A9A', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', writingMode: 'vertical-rl', transform: 'rotate(180deg)', marginTop: 8 } }, 'Master Agent')
-    );
+      R('button', { onClick: () => this.setState({ chatCollapsed: true }), style: { background: 'transparent', border: 0, color: '#fff', cursor: 'pointer', opacity: .4, padding: 4, display: 'flex', alignItems: 'center' } },
+        this._svg('<polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/>', 16)
+      )
+    )
+  );
 
-    const SUB = [
-      { n: 'Segmentation', s: 1 }, { n: 'Competitor', s: 2 }, { n: 'Offer', s: 3 },
-      { n: 'Simulation', s: 5 }, { n: 'Content', s: 6 }
-    ];
+  // Trace items - each one shows only if agentStep has passed it
+  const traceItems = [];
 
-    const LABELS = ['', 'Segmentation Agent', 'Competitor Agent', 'Offer Agent', 'Channel & Timing', 'Simulation Agent', 'Content Agent', 'Campaign Ready', 'Activated ✓'];
-    const curLabel = LABELS[agentStep] || 'Analyzing...';
-
-    const HIST = [
-      { s: 1, n: 'Segmentation', sum: () => audienceSize + ' customers · Budget Conscious' },
-      { s: 2, n: 'Competitor', sum: () => 'Competitor C at 99 TL — CRITICAL' },
-      { s: 3, n: 'Offer', sum: () => { const o = this.state.selectedOffer; return o === 'A' ? 'Offer A — 20% · 159 TL' : o === 'C' ? 'Offer C — Extra 5GB' : 'Offer B — 30% · 139 TL'; } },
-      { s: 4, n: 'Channel & Timing', sum: () => 'SMS + Email · Tue 09:00' },
-      { s: 5, n: 'Simulation', sum: () => this.rateAt(audienceSize).toFixed(0) + '% retention · ' + this.retainedAt(audienceSize) + ' customers' },
-      { s: 6, n: 'Content', sum: () => 'SMS + Email content approved' }
-    ];
-
-    const history = HIST.filter(h => h.s < agentStep && agentStep > 0).map((h, i) =>
-      R('div', { key: i, style: { display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px', borderBottom: '1px solid #EEF2F7', background: '#FAFBFC' } },
-        R('div', { style: { width: 16, height: 16, borderRadius: '50%', background: '#62AB47', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 } },
-          this._svg('<path d="M20 6L9 17l-5-5"/>', 9, '#fff')
-        ),
-        R('div', { style: { flex: 1, minWidth: 0, display: 'flex', gap: 4, alignItems: 'center' } },
-          R('span', { style: { fontSize: 10, fontWeight: 700, color: '#505B79', textTransform: 'uppercase', letterSpacing: '.06em', whiteSpace: 'nowrap' } }, h.n),
-          R('span', { style: { fontSize: 10, color: '#A6AEBD' } }, '—'),
-          R('span', { style: { fontSize: 10, color: '#7E8A9A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, h.sum())
+  // Always show: Master Agent start + Digital Twin signal
+  traceItems.push(
+    R('div', { key: 'start', style: { display: 'flex', gap: 10, padding: '10px 14px 6px', borderBottom: '1px solid #EEF2F7' } },
+      R('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, flexShrink: 0 } },
+        R('div', { style: { width: 10, height: 10, borderRadius: '50%', background: '#62AB47', marginTop: 2, flexShrink: 0 } })
+      ),
+      R('div', { style: { flex: 1, minWidth: 0 } },
+        R('div', { style: { fontSize: 12, fontWeight: 700, color: '#2B3445', marginBottom: 3 } }, 'Marketing Master Agent başlattı'),
+        R('div', { style: { fontSize: 11, color: '#7E8A9A', lineHeight: 1.6 } },
+          'Digital Twin sinyali alındı: ',
+          R('span', { style: { fontWeight: 600, color: '#E5484D' } }, 'Budget Conscious'),
+          ', churn 0.65 → 0.78'
         )
       )
-    );
+    )
+  );
 
-    /* Widget progress bar */
-    const totalSteps = 7;
-    const pct = Math.max(0, Math.min(100, (agentStep / totalSteps) * 100));
-
-    const header = R('div', { style: { background: 'linear-gradient(160deg,#2A3252,#3A4870)', color: '#fff', flexShrink: 0 } },
-      R('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px 4px', fontSize: 10, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', opacity: .55 } },
-        R('div', { style: { display: 'flex', alignItems: 'center', gap: 5 } },
-          this._svg('<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/>', 10),
-          'Marketing Master Agent'
+  // Step 1+: Segmentation Agent
+  if (agentStep >= 1) {
+    const segDone = agentStep > 1;
+    const segActive = agentStep === 1 && thinking;
+    traceItems.push(
+      R('div', { key: 'seg', style: { display: 'flex', gap: 10, padding: '8px 14px', borderBottom: '1px solid #EEF2F7', background: segActive ? '#FAFFF7' : '#fff' } },
+        R('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, paddingTop: 2 } },
+          R('div', { style: { width: 2, height: 10, background: '#E3E8EF', marginBottom: 3 } }),
+          R('div', { style: { width: 18, height: 18, borderRadius: '50%', background: segDone ? '#62AB47' : '#EEF3FA', border: '2px solid ' + (segDone ? '#62AB47' : '#C9D2DE'), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 } },
+            segDone ? this._svg('<path d="M20 6L9 17l-5-5"/>', 9, '#fff') :
+            this._svg('<path d="M21 12a9 9 0 1 1-6.219-8.56"/>', 10, '#62AB47')
+          )
         ),
-        R('div', { style: { background: 'rgba(98,171,71,.28)', color: '#8ee86a', fontSize: 9, padding: '2px 7px', borderRadius: 999, border: '1px solid rgba(98,171,71,.35)', letterSpacing: '.05em', opacity: 1 } }, 'LIVE')
-      ),
-      R('div', { style: { display: 'flex', alignItems: 'center', gap: 10, padding: '4px 14px 10px' } },
-        R('div', { style: { width: 34, height: 34, borderRadius: 10, background: 'rgba(247,148,29,.2)', border: '1px solid rgba(247,148,29,.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 } },
-          this._svg('<path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 15l.75 2.25L8 18l-2.25.75L5 21l-.75-2.25L2 18l2.25-.75z"/>', 17, '#F7941D')
-        ),
-        R('div', { style: { flex: 1 } },
-          R('div', { style: { fontSize: 14, fontWeight: 700 } }, 'Marketing Master Agent'),
-          R('div', { style: { fontSize: 10, opacity: .5, marginTop: 1 } }, curLabel)
-        ),
-        R('button', { onClick: () => this.setState({ chatCollapsed: true }), style: { background: 'transparent', border: 0, color: '#fff', cursor: 'pointer', opacity: .4, padding: 4, display: 'flex', alignItems: 'center' } },
-          this._svg('<polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/>', 16)
+        R('div', { style: { flex: 1, minWidth: 0 } },
+          R('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 } },
+            R('span', { style: { fontSize: 12, fontWeight: 700, color: '#2B3445' } }, 'Segmentation Agent'),
+            R('span', { style: { fontSize: 10, color: '#3E5280', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 } },
+              'Segmentation\'da Aç ',
+              this._svg('<line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/>', 9, '#3E5280')
+            )
+          ),
+          R('div', { style: { fontSize: 11, color: '#7E8A9A', lineHeight: 1.6 } },
+            audienceSize + ' müşteri filtrelendi · Churn >0.75 · 24+ ay · ARPU 100TL+'
+          )
         )
-      ),
-      /* Sub-agents strip */
-      R('div', { style: { padding: '0 12px 8px' } },
-        R('div', { style: { fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,.28)', textTransform: 'uppercase', letterSpacing: '.09em', marginBottom: 5 } }, 'Sub-Agents'),
-        R('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 4 } },
-          ...SUB.map((ag, i) => {
-            const done = ag.s < agentStep, active = ag.s === agentStep;
-            return R('div', { key: i, style: { display: 'flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: 999, background: done ? 'rgba(98,171,71,.15)' : active ? 'rgba(255,255,255,.1)' : 'rgba(255,255,255,.04)', border: '1px solid ' + (done ? 'rgba(98,171,71,.3)' : active ? 'rgba(255,255,255,.18)' : 'rgba(255,255,255,.07)'), transition: 'all 250ms' } },
-              R('div', { style: { width: 5, height: 5, borderRadius: '50%', background: done ? '#62AB47' : active ? '#F7941D' : 'rgba(255,255,255,.18)', boxShadow: active ? '0 0 6px rgba(247,148,29,.9)' : done ? '0 0 4px rgba(98,171,71,.5)' : 'none', transition: 'all 250ms' } }),
-              R('span', { style: { fontSize: 10, fontWeight: done || active ? 600 : 400, color: done ? '#8ee86a' : active ? 'rgba(255,255,255,.9)' : 'rgba(255,255,255,.26)', whiteSpace: 'nowrap' } }, ag.n)
-            );
-          })
-        )
-      ),
-      /* Progress bar */
-      R('div', { style: { height: 2, background: 'rgba(255,255,255,.1)', margin: '0 0 0 0' } },
-        R('div', { style: { height: '100%', width: pct + '%', background: 'linear-gradient(90deg,#62AB47,#F7941D)', transition: 'width 600ms ease' } })
-      )
-    );
-
-    const contextChip = R('div', { style: { padding: '7px 12px', borderBottom: '1px solid #EEF2F7', background: '#F8FAFC', flexShrink: 0 } },
-      R('div', { style: { display: 'inline-flex', alignItems: 'center', gap: 5, background: '#EEF3FA', color: '#3E4660', fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 999, border: '1px solid #D8E4F0' } },
-        this._svg('<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>', 10),
-        ' Budget Conscious · ' + audienceSize + ' customers at risk'
-      )
-    );
-
-    return R('div', { style: { width: 388, flexShrink: 0, background: '#fff', borderLeft: '1px solid #EEF2F7', display: 'flex', flexDirection: 'column', overflow: 'hidden' } },
-      header, contextChip,
-      R('div', { style: { flex: 1, overflowY: 'auto' } },
-        ...history,
-        this.buildStepCard()
       )
     );
   }
 
-  /* ─── COMPETITOR DETAIL MODAL ──────────────────────────── */
-  buildCompetitorModal() {
-    const R = (t, p, ...c) => React.createElement(t, p, ...c);
+  // Step 2+: Competitor Agent
+  if (agentStep >= 2) {
+    const done = agentStep > 2;
+    traceItems.push(
+      R('div', { key: 'comp', style: { display: 'flex', gap: 10, padding: '8px 14px', borderBottom: '1px solid #EEF2F7' } },
+        R('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, paddingTop: 2 } },
+          R('div', { style: { width: 2, height: 10, background: '#E3E8EF', marginBottom: 3 } }),
+          R('div', { style: { width: 18, height: 18, borderRadius: '50%', background: done ? '#62AB47' : '#EEF3FA', border: '2px solid ' + (done ? '#62AB47' : '#C9D2DE'), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 } },
+            done ? this._svg('<path d="M20 6L9 17l-5-5"/>', 9, '#fff') :
+            this._svg('<path d="M21 12a9 9 0 1 1-6.219-8.56"/>', 10, '#62AB47')
+          )
+        ),
+        R('div', { style: { flex: 1, minWidth: 0 } },
+          R('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 } },
+            R('span', { style: { fontSize: 12, fontWeight: 700, color: '#2B3445' } }, 'Competitor Agent'),
+            R('span', { style: { fontSize: 10, color: '#3E5280', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 } },
+              'Competitor Intelligence\'da Aç ',
+              this._svg('<line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/>', 9, '#3E5280')
+            )
+          ),
+          R('div', { style: { fontSize: 11, color: '#7E8A9A', lineHeight: 1.6 } },
+            '3 rakip teklif tespit edildi · Turkcell, Vodafone analizi hazır'
+          )
+        )
+      )
+    );
+  }
 
+  // Step 3+: Offer Agent
+  if (agentStep >= 3) {
+    const done = agentStep > 3;
+    const offerLabel = selectedOffer === 'A' ? '20% İndirim — 159 TL/ay (seçildi)' : selectedOffer === 'C' ? 'Extra 5GB — Aynı fiyat (seçildi)' : selectedOffer === 'B' ? '30% İndirim — 139 TL/ay (seçildi)' : 'Öneri: 20% İndirim — 159 TL/ay';
+    traceItems.push(
+      R('div', { key: 'offer', style: { display: 'flex', gap: 10, padding: '8px 14px', borderBottom: '1px solid #EEF2F7' } },
+        R('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, paddingTop: 2 } },
+          R('div', { style: { width: 2, height: 10, background: '#E3E8EF', marginBottom: 3 } }),
+          R('div', { style: { width: 18, height: 18, borderRadius: '50%', background: done ? '#62AB47' : '#EEF3FA', border: '2px solid ' + (done ? '#62AB47' : '#C9D2DE'), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 } },
+            done ? this._svg('<path d="M20 6L9 17l-5-5"/>', 9, '#fff') :
+            this._svg('<path d="M21 12a9 9 0 1 1-6.219-8.56"/>', 10, '#62AB47')
+          )
+        ),
+        R('div', { style: { flex: 1, minWidth: 0 } },
+          R('div', { style: { marginBottom: 2 } },
+            R('span', { style: { fontSize: 12, fontWeight: 700, color: '#2B3445' } }, 'Offer Agent')
+          ),
+          R('div', { style: { fontSize: 11, color: '#7E8A9A', lineHeight: 1.6 } }, offerLabel)
+        )
+      )
+    );
+  }
+
+  // Step 5+: Simulation Agent
+  if (agentStep >= 5) {
+    const done = agentStep > 5;
+    const rate = this.rateAt(audienceSize);
+    const retained = this.retainedAt(audienceSize);
+    traceItems.push(
+      R('div', { key: 'sim', style: { display: 'flex', gap: 10, padding: '8px 14px', borderBottom: '1px solid #EEF2F7' } },
+        R('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, paddingTop: 2 } },
+          R('div', { style: { width: 2, height: 10, background: '#E3E8EF', marginBottom: 3 } }),
+          R('div', { style: { width: 18, height: 18, borderRadius: '50%', background: done ? '#62AB47' : '#EEF3FA', border: '2px solid ' + (done ? '#62AB47' : '#C9D2DE'), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 } },
+            done ? this._svg('<path d="M20 6L9 17l-5-5"/>', 9, '#fff') :
+            this._svg('<path d="M21 12a9 9 0 1 1-6.219-8.56"/>', 10, '#62AB47')
+          )
+        ),
+        R('div', { style: { flex: 1, minWidth: 0 } },
+          R('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 } },
+            R('span', { style: { fontSize: 12, fontWeight: 700, color: '#2B3445' } }, 'Simulation Agent'),
+            R('span', { style: { fontSize: 10, color: '#3E5280', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 } },
+              'Campaign Simulation\'da Aç ',
+              this._svg('<line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/>', 9, '#3E5280')
+            )
+          ),
+          R('div', { style: { fontSize: 11, color: '#7E8A9A', lineHeight: 1.6 } },
+            'Beklenen retention: %' + rate.toFixed(0) + ' · SMS+Email önerildi · ' + retained + ' müşteri korunacak'
+          )
+        )
+      )
+    );
+  }
+
+  // Step 6+: Content Agent
+  if (agentStep >= 6) {
+    const done = agentStep > 6;
+    traceItems.push(
+      R('div', { key: 'content', style: { display: 'flex', gap: 10, padding: '8px 14px', borderBottom: '1px solid #EEF2F7' } },
+        R('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, paddingTop: 2 } },
+          R('div', { style: { width: 2, height: 10, background: '#E3E8EF', marginBottom: 3 } }),
+          R('div', { style: { width: 18, height: 18, borderRadius: '50%', background: done ? '#62AB47' : '#EEF3FA', border: '2px solid ' + (done ? '#62AB47' : '#C9D2DE'), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 } },
+            done ? this._svg('<path d="M20 6L9 17l-5-5"/>', 9, '#fff') :
+            this._svg('<path d="M21 12a9 9 0 1 1-6.219-8.56"/>', 10, '#62AB47')
+          )
+        ),
+        R('div', { style: { flex: 1, minWidth: 0 } },
+          R('div', { style: { marginBottom: 2 } },
+            R('span', { style: { fontSize: 12, fontWeight: 700, color: '#2B3445' } }, 'Content Agent')
+          ),
+          R('div', { style: { fontSize: 11, color: '#7E8A9A', lineHeight: 1.6 } },
+            'SMS + Email taslağı hazır'
+          )
+        )
+      )
+    );
+  }
+
+  // Step 7+: Campaign form filled
+  if (agentStep >= 7) {
+    traceItems.push(
+      R('div', { key: 'form', style: { display: 'flex', gap: 10, padding: '8px 14px', borderBottom: '1px solid #EEF2F7' } },
+        R('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, paddingTop: 2 } },
+          R('div', { style: { width: 2, height: 10, background: '#E3E8EF', marginBottom: 3 } }),
+          R('div', { style: { width: 18, height: 18, borderRadius: '50%', background: '#62AB47', border: '2px solid #62AB47', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 } },
+            this._svg('<path d="M20 6L9 17l-5-5"/>', 9, '#fff')
+          )
+        ),
+        R('div', { style: { flex: 1, minWidth: 0 } },
+          R('div', { style: { fontSize: 12, fontWeight: 700, color: '#3E9232' } }, '✓ Campaign formu dolduruldu')
+        )
+      )
+    );
+  }
+
+  // "Processing..." indicator when thinking
+  const processingEl = thinking ? R('div', { key: 'thinking', style: { display: 'flex', alignItems: 'center', gap: 9, padding: '12px 14px', color: '#7E8A9A', fontSize: 12 } },
+    ...[0, .2, .4].map(d => R('div', { key: d, style: { width: 6, height: 6, borderRadius: '50%', background: '#62AB47', animation: 'pulse 1.2s ' + d + 's infinite' } })),
+    R('span', {}, 'İşleniyor...')
+  ) : null;
+
+  return R('div', { style: { width: 360, flexShrink: 0, background: '#fff', borderLeft: '1px solid #EEF2F7', display: 'flex', flexDirection: 'column', overflow: 'hidden' } },
+    header,
+    R('div', { style: { flex: 1, overflowY: 'auto' } },
+      ...traceItems,
+      processingEl
+    )
+  );
+}
+
+  _removedModals() {
+    /* buildCompetitorModal and buildChartModal removed — content lives in Competitor Intelligence and Campaign Simulation modules */
     const COMPS = [
       {
         name: 'Competitor A',
@@ -1096,8 +980,8 @@ class Component extends DCLogic {
     );
   }
 
-  /* ─── SIMULATION CHART MODAL ───────────────────────────── */
-  buildChartModal() {
+  buildChartModal_removed() {
+    /* removed — simulation data lives in Campaign Simulation module */
     const R = (t, p, ...c) => React.createElement(t, p, ...c);
     const { audienceSize } = this.state;
 
@@ -1177,7 +1061,7 @@ class Component extends DCLogic {
 
   /* ─── RENDER VALS ──────────────────────────────────────── */
   renderVals() {
-    const { formStep, agentStep, showChart } = this.state;
+    const { formStep, agentStep } = this.state;
     const SNAMES = ['Campaign Info', 'Audience', 'Channel & Content', 'Schedule', 'Summary'];
     const TITLES = ['Campaign Information', 'Target Audience', 'Channel & Content', 'Campaign Schedule', 'Review & Save'];
     const SUBS = [
@@ -1220,11 +1104,7 @@ class Component extends DCLogic {
       stepperEl,
       formCardEl,
       formActionsEl,
-      agentWidgetEl: this.buildAgentWidget(),
-      chartModalEl: showChart ? this.buildChartModal() : null,
-      showChart,
-      competitorModalEl: this.state.showCompetitor ? this.buildCompetitorModal() : null,
-      showCompetitor: this.state.showCompetitor
+      agentWidgetEl: this.buildAgentWidget()
     };
   }
 }
