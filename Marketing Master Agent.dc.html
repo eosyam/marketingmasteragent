@@ -81,6 +81,8 @@
       <div style="font-size:10px;color:#A6AEBD;font-weight:700;text-transform:uppercase;letter-spacing:.1em;padding:10px 18px 5px">USES</div>
       <div style="padding:8px 18px;font-size:13px;color:#505B79;display:flex;align-items:center;gap:9px;cursor:pointer"><i data-lucide="layers" style="width:15px;height:15px;flex-shrink:0"></i>Program</div>
       <div style="padding:8px 15px;font-size:13px;color:#62AB47;font-weight:600;display:flex;align-items:center;gap:9px;background:#EEF3FA;border-left:3px solid #62AB47;cursor:pointer"><i data-lucide="megaphone" style="width:15px;height:15px;flex-shrink:0"></i>Campaign</div>
+      <div style="padding:8px 18px;font-size:13px;color:#A6AEBD;display:flex;align-items:center;gap:9px;cursor:not-allowed"><i data-lucide="target" style="width:15px;height:15px;flex-shrink:0"></i>Competitor Intelligence</div>
+      <div style="padding:8px 18px;font-size:13px;color:#A6AEBD;display:flex;align-items:center;gap:9px;cursor:not-allowed"><i data-lucide="activity" style="width:15px;height:15px;flex-shrink:0"></i>Campaign Simulation</div>
       <div style="padding:8px 18px;font-size:13px;color:#505B79;display:flex;align-items:center;gap:9px;cursor:pointer"><i data-lucide="file-text" style="width:15px;height:15px;flex-shrink:0"></i>Content</div>
       <div style="padding:8px 18px;font-size:13px;color:#505B79;display:flex;align-items:center;gap:9px;cursor:pointer"><i data-lucide="users" style="width:15px;height:15px;flex-shrink:0"></i>Segmentation</div>
       <div style="padding:8px 18px;font-size:13px;color:#505B79;display:flex;align-items:center;gap:9px;cursor:pointer"><i data-lucide="database" style="width:15px;height:15px;flex-shrink:0"></i>Datamart</div>
@@ -103,15 +105,6 @@
 
   </div>
 
-  <!-- CHART MODAL -->
-  <sc-if value="{{ showChart }}" hint-placeholder-val="{{ false }}">
-    {{ chartModalEl }}
-  </sc-if>
-
-  <!-- COMPETITOR MODAL -->
-  <sc-if value="{{ showCompetitor }}" hint-placeholder-val="{{ false }}">
-    {{ competitorModalEl }}
-  </sc-if>
 
 </div>
 
@@ -125,8 +118,6 @@ class Component extends DCLogic {
     selectedOffer: null,
     audienceSize: 300,
     revisionRound: 0,
-    showChart: false,
-    showCompetitor: false,
     chatCollapsed: false,
     formStep: 0,
     form: {
@@ -184,7 +175,6 @@ class Component extends DCLogic {
     setTimeout(() => {
       this.setState(s => ({
         thinking: false, agentStep: 2, revisionRound: 0,
-        showCompetitor: true,
         form: { ...s.form, datamart: 'Budget Conscious — ' + aud + ' customers' },
         formStep: 1
       }));
@@ -200,7 +190,6 @@ class Component extends DCLogic {
   }
 
   proceedToOffers() {
-    this.setState({ showCompetitor: false });
     this._go(3);
   }
 
@@ -657,12 +646,6 @@ class Component extends DCLogic {
         )
       ),
       R('div', { style: { display: 'flex', gap: 8 } },
-        btn(
-          R('span', { style: { display: 'flex', alignItems: 'center', gap: 4 } },
-            this._svg('<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>', 12), 'Reopen Report'
-          ),
-          () => this.setState({ showCompetitor: true }), 'blue'
-        ),
         btn('Continue to Offers →', () => this.proceedToOffers(), 'primary')
       )
     );
@@ -744,12 +727,6 @@ class Component extends DCLogic {
           )
         ),
         R('div', { style: { display: 'flex', gap: 6, flexWrap: 'wrap' } },
-          btn(
-            R('span', { style: { display: 'flex', alignItems: 'center', gap: 4 } },
-              this._svg('<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>', 12), 'View Chart'
-            ),
-            () => this.setState({ showChart: true }), 'blue'
-          ),
           btn('Approve ✓', () => this.approveSimulation(), 'primary'),
           btn(revisionRound >= 2 ? 'Max reached' : 'Widen Audience', () => this.widenAudience(), 'ghost', revisionRound >= 2)
         )
